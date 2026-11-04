@@ -121,7 +121,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (bundleIdx !== null && bundleOptions[bundleIdx]) {
       updateBundleSelection(bundleIdx);
     }
-    if (duplicateAlertEl) duplicateAlertEl.style.display = 'none';
+
+    const phoneInput = document.getElementById('modalPhone');
+    if (phoneInput) {
+      const clean = phoneInput.value.replace(/\D/g, '').slice(-10);
+      if (clean.length === 10 && isDuplicateOrder(clean)) {
+        showDuplicateWarning(clean);
+      } else {
+        hideDuplicateWarning();
+      }
+    } else {
+      if (duplicateAlertEl) duplicateAlertEl.style.display = 'none';
+    }
+
     codModal.classList.add('active');
     document.body.style.overflow = 'hidden';
 
@@ -175,32 +187,136 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ==========================================================================
-  // 3. 24-HOUR DUPLICATE PHONE CHECK HELPER
+  // 3. 24-HOUR DUPLICATE PHONE CHECK & WARNING CONTROLS
   // ==========================================================================
   function isDuplicateOrder(phone) {
+    const clean = String(phone).replace(/\D/g, '').slice(-10);
+    if (!clean || clean.length !== 10) return false;
+
     try {
+      // 1. Check LocalStorage
       const stored = localStorage.getItem(STORAGE_KEY_CONTACTS);
-      if (!stored) return false;
-      const contacts = JSON.parse(stored);
-      const entryTime = contacts[phone];
-      if (entryTime && (Date.now() - entryTime < COOLDOWN_24H_MS)) {
-        return true;
+      if (stored) {
+        const contacts = JSON.parse(stored);
+        const entryTime = contacts[clean];
+        if (entryTime && (Date.now() - entryTime < COOLDOWN_24H_MS)) {
+          return true;
+        }
+      }
+      // 2. Check SessionStorage Backup
+      const sessionStored = sessionStorage.getItem(STORAGE_KEY_CONTACTS);
+      if (sessionStored) {
+        const sessionContacts = JSON.parse(sessionStored);
+        const sEntryTime = sessionContacts[clean];
+        if (sEntryTime && (Date.now() - sEntryTime < COOLDOWN_24H_MS)) {
+          return true;
+        }
       }
     } catch (err) {
-      console.warn('LocalStorage access error:', err);
+      console.warn('Storage access check error:', err);
     }
     return false;
   }
 
-  function markPhoneAsOrdered(phone) {
+  function getDuplicateRemainingHours(phone) {
+    const clean = String(phone).replace(/\D/g, '').slice(-10);
     try {
       const stored = localStorage.getItem(STORAGE_KEY_CONTACTS);
       const contacts = stored ? JSON.parse(stored) : {};
-      contacts[phone] = Date.now();
+      const timestamp = contacts[clean];
+      if (timestamp) {
+        const elapsed = Date.now() - timestamp;
+        if (elapsed < COOLDOWN_24H_MS) {
+          return Math.ceil((COOLDOWN_24H_MS - elapsed) / (1000 * 60 * 60));
+        }
+      }
+    } catch (e) {
+      console.warn('LocalStorage error:', e);
+    }
+    return 24;
+  }
+
+  function markPhoneAsOrdered(phone) {
+    const clean = String(phone).replace(/\D/g, '').slice(-10);
+    if (!clean || clean.length !== 10) return;
+    const now = Date.now();
+
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY_CONTACTS);
+      const contacts = stored ? JSON.parse(stored) : {};
+      contacts[clean] = now;
       localStorage.setItem(STORAGE_KEY_CONTACTS, JSON.stringify(contacts));
     } catch (err) {
       console.warn('LocalStorage save error:', err);
     }
+
+    try {
+      const sStored = sessionStorage.getItem(STORAGE_KEY_CONTACTS);
+      const sContacts = sStored ? JSON.parse(sStored) : {};
+      sContacts[clean] = now;
+      sessionStorage.setItem(STORAGE_KEY_CONTACTS, JSON.stringify(sContacts));
+    } catch (err) {
+      console.warn('SessionStorage save error:', err);
+    }
+  }
+
+  function showDuplicateWarning(cleanPhone) {
+    if (!duplicateAlertEl) return;
+    const hours = getDuplicateRemainingHours(cleanPhone);
+    const hoursText = hours > 0 ? `${hours} hours` : '24 hours';
+
+    duplicateAlertEl.innerHTML = `<strong>⚠️ Duplicate Order Notice:</strong> A Cash On Delivery order with mobile number <strong>${cleanPhone}</strong> has already been placed in the last 24 hours. Please wait <strong>${hoursText}</strong> to re-order. Our wellness care team will contact you shortly to confirm dispatch.`;
+    duplicateAlertEl.style.display = 'block';
+
+    const phoneInput = document.getElementById('modalPhone');
+    if (phoneInput) {
+      phoneInput.style.borderColor = '#DC2626';
+      phoneInput.style.backgroundColor = '#FEF2F2';
+    }
+
+    if (modalSubmitBtn) {
+      modalSubmitBtn.disabled = true;
+      modalSubmitBtn.innerHTML = '<span>⚠️ Already Ordered with this Number (Wait 24h)</span>';
+    }
+  }
+
+  function hideDuplicateWarning() {
+    if (duplicateAlertEl) {
+      duplicateAlertEl.style.display = 'none';
+    }
+    const phoneInput = document.getElementById('modalPhone');
+    if (phoneInput) {
+      phoneInput.style.borderColor = '';
+      phoneInput.style.backgroundColor = '';
+    }
+    if (modalSubmitBtn && modalSubmitBtn.disabled) {
+      modalSubmitBtn.disabled = false;
+      modalSubmitBtn.innerHTML = '<span>👉 Confirm Cash On Delivery Order</span>';
+    }
+  }
+
+  // Real-time live check on phone input
+  const modalPhoneInput = document.getElementById('modalPhone');
+  if (modalPhoneInput) {
+    modalPhoneInput.addEventListener('input', (e) => {
+      const clean = e.target.value.replace(/\D/g, '').slice(-10);
+      if (clean.length === 10) {
+        if (isDuplicateOrder(clean)) {
+          showDuplicateWarning(clean);
+        } else {
+          hideDuplicateWarning();
+        }
+      } else {
+        hideDuplicateWarning();
+      }
+    });
+
+    modalPhoneInput.addEventListener('blur', (e) => {
+      const clean = e.target.value.replace(/\D/g, '').slice(-10);
+      if (clean.length === 10 && isDuplicateOrder(clean)) {
+        showDuplicateWarning(clean);
+      }
+    });
   }
 
   // ==========================================================================
@@ -232,19 +348,26 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const phoneRegex = /^[6-9]\d{9}$/;
-      if (!phoneRegex.test(phone)) {
+      const cleanPhone = phone.replace(/\D/g, '').slice(-10);
+      if (!phoneRegex.test(cleanPhone)) {
         alert('Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9');
         phoneInput.focus();
         return;
       }
 
-      // Check 24-hour duplicate
-      if (isDuplicateOrder(phone)) {
+      // Check 24-hour duplicate: BLOCK SUBMISSION
+      if (isDuplicateOrder(cleanPhone)) {
+        showDuplicateWarning(cleanPhone);
         if (duplicateAlertEl) {
-          duplicateAlertEl.style.display = 'block';
-          duplicateAlertEl.scrollIntoView({ behavior: 'smooth' });
+          duplicateAlertEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-        return;
+        alert(
+          `⚠️ Duplicate Order Notice:\n\n` +
+          `A Cash On Delivery order with mobile number (${cleanPhone}) has already been placed in the last 24 hours.\n\n` +
+          `Please wait 24 hours to re-order. Our wellness care team is already processing your order and will contact you shortly!`
+        );
+        phoneInput.focus();
+        return false;
       }
 
       // Disable button & show spinner
@@ -258,7 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const payload = {
         orderId: orderId,
         name: name,
-        phone: phone,
+        phone: cleanPhone,
         address: address || 'N/A',
         city: city || 'N/A',
         pincode: pincode || 'N/A',
@@ -281,8 +404,8 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('Webhook dispatch note:', networkErr);
       }
 
-      // Mark phone in localStorage
-      markPhoneAsOrdered(phone);
+      // Mark phone in localStorage and sessionStorage
+      markPhoneAsOrdered(cleanPhone);
 
       // Reset button
       modalSubmitBtn.disabled = false;
@@ -303,7 +426,7 @@ document.addEventListener('DOMContentLoaded', () => {
           `Hi Madhavbaug Team, I just placed a Cash On Delivery order for Cramp Relief Roll-On!\n\n` +
           `*Order ID:* #${orderId}\n` +
           `*Name:* ${name}\n` +
-          `*Contact:* ${phone}\n` +
+          `*Contact:* ${cleanPhone}\n` +
           `*Package:* ${currentItem.title}\n` +
           `*Price:* ${currentItem.price} (COD)\n\n` +
           `Please confirm my shipment dispatch at the earliest. Thank you!`

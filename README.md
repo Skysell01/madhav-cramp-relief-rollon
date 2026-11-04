@@ -18,7 +18,10 @@ A high-converting, mobile-responsive landing page designed for **Madhavbaug Ayur
 3. **100% Cash On Delivery (COD) & Tracking**:
    - Meta Pixel integrated with ID: `1315754011931343` (`PageView`, `InitiateCheckout`, and `Lead` events).
    - Zero advance payment messaging across top announcement bar, hero section, sticky floating bar, and order modals.
-   - 24-hour duplicate phone number protection against spam or accidental multiple orders.
+   - **24-Hour Duplicate Phone Number Prevention**:
+     - Real-time instant validation while typing: typing an already-ordered number shows duplicate alert notice, calculates remaining hours, and disables the submit button.
+     - Hard submission block on frontend via both `localStorage` and `sessionStorage`.
+     - Google Apps Script backend verification before appending to Google Sheet.
    - Google Sheets Webhook integration (`google_apps_script.js`).
    - Instant WhatsApp Order Confirmation direct link with pre-filled message upon checkout.
 4. **Live Social Proof**:

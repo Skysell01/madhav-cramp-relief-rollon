@@ -192,6 +192,15 @@ ul {
   box-shadow: 0 14px 32px rgba(255, 102, 0, 0.45);
 }
 
+.btn-cta:disabled {
+  background: #9CA3AF !important;
+  color: #FFFFFF !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  transform: none !important;
+  opacity: 0.75;
+}
+
 .btn-cta-sm {
   padding: 10px 20px;
   font-size: 0.92rem;
