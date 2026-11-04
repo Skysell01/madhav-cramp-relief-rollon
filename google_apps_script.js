@@ -16,6 +16,8 @@
  * 10. Click "Deploy" and authorize permissions
  * 11. Copy the generated Web App URL and paste it into assets/js/main.js (GOOGLE_SHEETS_WEBHOOK_URL)
  * 
+ * Active Webhook URL:
+ * https://script.google.com/macros/s/AKfycbxlwbY8ZiK-nis2CAFu_VI2UwMTui3Ige95fKxCUfIQASMi-NnCXMK1QxNENDCznnsrtw/exec
  * ==============================================================================
  */
 

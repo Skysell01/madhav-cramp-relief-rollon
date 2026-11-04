@@ -14,7 +14,7 @@
  */
 
 // Google Sheets Webhook URL
-const GOOGLE_SHEETS_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbz_pFoujSNJ10iPkYucQNK0q-vlXrSBnEq0JrkG98PKkkrN-1Wa7I-H3ELngvQv7DSG/exec';
+const GOOGLE_SHEETS_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxlwbY8ZiK-nis2CAFu_VI2UwMTui3Ige95fKxCUfIQASMi-NnCXMK1QxNENDCznnsrtw/exec';
 
 // Local Storage Key & 24hr Cooldown
 const STORAGE_KEY_CONTACTS = 'madhavbaug_cramp_contacts_24h';
@@ -124,6 +124,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (duplicateAlertEl) duplicateAlertEl.style.display = 'none';
     codModal.classList.add('active');
     document.body.style.overflow = 'hidden';
+
+    // Track Meta Pixel InitiateCheckout event
+    if (typeof window.fbq === 'function') {
+      const activeBundle = bundleOptions[selectedBundleIndex];
+      window.fbq('track', 'InitiateCheckout', {
+        content_name: activeBundle.title,
+        content_category: 'Cramp Relief Roll-On',
+        value: activeBundle.numericPrice,
+        currency: 'INR'
+      });
+    }
   }
 
   function closeAllModals() {
@@ -298,6 +309,16 @@ document.addEventListener('DOMContentLoaded', () => {
           `Please confirm my shipment dispatch at the earliest. Thank you!`
         );
         whatsappBtn.href = `https://wa.me/919321456789?text=${waMsg}`;
+      }
+
+      // Track Meta Pixel Lead event
+      if (typeof window.fbq === 'function') {
+        window.fbq('track', 'Lead', {
+          content_name: currentItem.title,
+          content_category: 'Cramp Relief Roll-On',
+          value: currentItem.numericPrice,
+          currency: 'INR'
+        });
       }
 
       // Reset form

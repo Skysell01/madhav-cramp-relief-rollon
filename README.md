@@ -15,7 +15,8 @@ A high-converting, mobile-responsive landing page designed for **Madhavbaug Ayur
    - **Ingredients Banner**: Infographic banner highlighting the 5 natural active herbs: Pudina Satva (Menthol), Nilgiri Tel (Eucalyptus Oil), Gandhapura (Wintergreen Oil), Sonth (Ginger Extract), and Kapoor (Camphor) (`assets/images/cramp_ingredients_banner.jpg`).
    - **WhatsApp Reviews Section Banner**: Authentic customer WhatsApp chat testimonials praising instant relief from leg cramps, gym calf cramps, period abdominal cramps, and travel stiffness (`assets/images/cramp_whatsapp_reviews.jpg`).
    - **Official Madhavbaug Logo**: Embedded across Navbar and Footer (`assets/images/madhavbaug_logo.png`).
-3. **100% Cash On Delivery (COD) Focus**:
+3. **100% Cash On Delivery (COD) & Tracking**:
+   - Meta Pixel integrated with ID: `1315754011931343` (`PageView`, `InitiateCheckout`, and `Lead` events).
    - Zero advance payment messaging across top announcement bar, hero section, sticky floating bar, and order modals.
    - 24-hour duplicate phone number protection against spam or accidental multiple orders.
    - Google Sheets Webhook integration (`google_apps_script.js`).
